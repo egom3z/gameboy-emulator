@@ -1,0 +1,19 @@
+# ROMs and binaries
+*.gb
+*.gbc
+*.bin
+
+# Build output
+/build/
+./cache/
+/CMakeFiles/
+*.o
+*.exe
+*.app
+*.dylib
+*.dll
+
+# Editor cruft
+.vscode/
+.idea/
+.DS_Store
