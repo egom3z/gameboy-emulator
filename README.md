@@ -23,7 +23,7 @@ gameboy-emulator/
 ├── include/          # public headers (cpu.hpp, memory.hpp, ppu.hpp…)
 ├── src/              # implementation (.cpp) files
 ├── docs/             # architecture notes, opcode tables, etc.
-├── test/             # unit tests & test ROMs
+├── test/             # GoogleTest unit files & tiny ROMs
 ├── CMakeLists.txt    # top-level build script
 └── .gitignore
 ```
@@ -39,11 +39,32 @@ gameboy-emulator/
 | **Ubuntu 22.04** | `sudo apt install build-essential cmake libsdl2-dev` |
 | **Windows 10+** | Install **Visual Studio Build Tools** → `winget install cmake`, `vcpkg install sdl2` |
 
+> **No global install of GoogleTest needed**—CMake fetches it automatically if you enable tests.
+
 ### 2. Configure & build
 
 ```bash
 git clone https://github.com/<your-user>/gameboy-emulator.git
 cd gameboy-emulator
 mkdir build && cd build
-cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..
-cmake --build . --config Release
+
+# Configure:
+cmake .. -DCMAKE_BUILD_TYPE=Release \
+         -DGBEMU_BUILD_TESTS=ON      # OFF to skip GoogleTest
+
+# Compile emulator + (optionally) unit_tests
+cmake --build .
+```
+
+### 3. Run the emulator
+
+```bash
+./gbemu /path/to/roms/<rom_name/>.gb # currently defaults to entering main
+```
+
+### 4. Run unit tests
+```bash
+ctest        # all tests
+ctest -N     # list all discovered tests
+ctest -R CPU # run only tests whose gtest name contains "CPU"
+```
