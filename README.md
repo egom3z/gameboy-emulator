@@ -59,7 +59,7 @@ cmake --build .
 ### 3. Run the emulator
 
 ```bash
-./gbemu /path/to/roms/<rom_name/>.gb # currently defaults to entering main
+./gbemu /path/to/roms/<rom_name>.gb # currently defaults to entering main
 ```
 
 ### 4. Run unit tests
