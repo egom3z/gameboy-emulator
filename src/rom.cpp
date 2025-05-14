@@ -10,7 +10,12 @@
 
 namespace gb {
 
-  bool ROM::load(std::string_view path) { UNIMPLEMENTED(); }
+  auto ROM::load(std::string_view path) -> bool { UNIMPLEMENTED(); }
+
+  auto ROM::load(std::vector<u8>&& rawBytes) -> bool {
+    buffer_ = std::move(rawBytes);
+    return !buffer_.empty();
+  }
 
   auto ROM::data() -> const u8* { UNIMPLEMENTED(); }
 

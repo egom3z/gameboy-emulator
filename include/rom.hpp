@@ -16,7 +16,10 @@ namespace gb {
     public:
       explicit ROM() = default;
 
-      bool load(std::string_view path);
+      // Loaders
+      auto load(std::string_view path) -> bool;      // from .gb file on disk
+      auto load(std::vector<u8>&& rawBytes) -> bool; // from an in-memory blob
+
       [[nodiscard]] auto data() -> const u8*;
       [[nodiscard]] auto size() -> const size_t;
 
