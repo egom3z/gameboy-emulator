@@ -57,9 +57,9 @@ namespace gb {
     return !buffer_.empty();
   }
 
-  auto ROM::data() -> const u8* { UNIMPLEMENTED(); }
+  auto ROM::data() const -> const u8* { return buffer_.data(); }
 
-  auto ROM::size() -> const size_t { UNIMPLEMENTED(); }
+  auto ROM::size() const -> const size_t { return buffer_.size(); }
 
   auto ROM::titleChar(size_t i) -> const u8 { UNIMPLEMENTED(); }
 
