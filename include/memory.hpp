@@ -1,8 +1,6 @@
 /**
  * @file memory.hpp
  * @brief Declares the Memory class, with read8, write8, and region mapping.
- *
- * @author Enrique Gomez and Jeshua Linder
  */
 
 #pragma once

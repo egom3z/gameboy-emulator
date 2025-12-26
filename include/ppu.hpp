@@ -1,8 +1,6 @@
 /**
  * @file ppu.hpp
  * @brief Declares the PPU class, modes (OAM scan, draw, HBlank), and scanline rendering logic.
- *
- * @author Enrique Gomez and Jeshua Linder
  */
 
 #pragma once

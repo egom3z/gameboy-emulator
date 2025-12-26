@@ -1,8 +1,6 @@
 /**
  * @file types.hpp
  * @brief Useful types for gb namespace
- *
- * @author Enrique Gomez and Jeshua Linder
  */
 
 #pragma once

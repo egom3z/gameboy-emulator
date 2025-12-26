@@ -1,8 +1,6 @@
 /**
  * @file ppu.cpp
  * @brief Implements the PPU: tile fetch, scanline rendering, mode transitions, VBlank
- *
- * @author Enrique Gomez and Jeshua Linder
  */
 
 #include "ppu.hpp"

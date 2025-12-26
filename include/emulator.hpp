@@ -1,8 +1,6 @@
 /**
  * @file emulator.hpp
  * @brief Declares a high-level Emulator class that wraps CPU, Memory, and PPU into one interface.
- *
- * @author Enrique Gomez and Jeshua Linder
  */
 
 #pragma once

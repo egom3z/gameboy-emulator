@@ -4,8 +4,6 @@
  *
  * This file implements the FETCH/DECODE/EXECUTE pipeline logic for the GameBoy's
  * SMLR35902 CPU which follows the SM83 instruction set.
- *
- * @author Enrique Gomez and Jeshua Linder
  */
 
 #include "cpu.hpp"

@@ -1,8 +1,6 @@
 /**
  * @file memory.cpp
  * @brief Implements memory access and memory-mapped I/O; maps ROM, VRAM, RAM, etc.
- *
- * @author Enrique Gomez and Jeshua Linder
  */
 
 #include "memory.hpp"

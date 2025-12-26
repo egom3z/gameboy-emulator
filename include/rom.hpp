@@ -1,8 +1,6 @@
 /**
  * @file rom.hpp
  * @brief Declares a ROM loader class or utility function to load .gb files into memory.
- *
- * @author Enrique Gomez and Jeshua Linder
  */
 
 #pragma once

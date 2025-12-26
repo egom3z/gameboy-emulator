@@ -1,8 +1,6 @@
 /**
  * @file cpu.hpp
  * @brief Declares the CPU class, registers, flags, and the step() function.
- *
- * @author Enrique Gomez and Jeshua Linder
  */
 
 #pragma once

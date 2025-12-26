@@ -1,8 +1,6 @@
 /**
  * @file rom.cpp
  * @brief Implements ROM file loading and header parsing 
- *
- * @author Enrique Gomez and Jeshua Linder
  */
 
 #include "rom.hpp"

@@ -1,8 +1,6 @@
 /**
  * @file main.cpp
- * @brief Entry point. Loads ROM, instantiates *Emulator*, runs emulation loop.
- *
- * @author Enrique Gomez and Jeshua Linder
+ * @brief Entry point. Loads ROM, instantiates Emulator, runs emulation loop.
  */
 
 #include "cpu.hpp"

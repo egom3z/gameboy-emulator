@@ -1,8 +1,6 @@
 /**
  * @file emulator.cpp
  * @brief Integrates CPU, Memory, and PPU and drives their coordination per cycle/frame.
- *
- * @author Enrique Gomez and Jeshua Linder
  */
 
 #include "emulator.hpp"
