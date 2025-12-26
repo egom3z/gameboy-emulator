@@ -22,8 +22,8 @@ namespace gb {
       auto load(std::string_view path) -> bool;      // from .gb file on disk
       auto load(std::vector<u8>&& rawBytes) -> bool; // from an in-memory blob
 
-      [[nodiscard]] auto data() -> const u8*;
-      [[nodiscard]] auto size() -> const size_t;
+      [[nodiscard]] auto data() const -> const u8*;
+      [[nodiscard]] auto size() const -> const size_t;
 
       // Cartridge header helpers
       [[nodiscard]] auto titleChar(size_t i) -> const u8;
