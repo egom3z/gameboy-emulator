@@ -1,5 +1,3 @@
-// emulator_sanity.cpp
-
 #include "emulator.hpp"
 #include "gtest/gtest.h"
 #include "rom.hpp"
@@ -14,7 +12,14 @@ inline auto make_endless_nop_rom() -> gb::ROM
   // | C3 00 01 |  JP  0x0100 |
   // |________________________|
 
-  std::vector<gb::u8> bytes {0x00, 0x00, 0xC3, 0x00, 0x01};
+  // The Game Boy CPU starts executing at address 0x0100 after reset.
+  // Pad the ROM so our tiny program actually lives at 0x0100.
+  std::vector<gb::u8> bytes(0x0100 + 5, 0x00);
+  bytes[0x0100 + 0] = 0x00; // NOP
+  bytes[0x0100 + 1] = 0x00; // NOP
+  bytes[0x0100 + 2] = 0xC3; // JP nn
+  bytes[0x0100 + 3] = 0x00; // low byte of 0x0100
+  bytes[0x0100 + 4] = 0x01; // high byte of 0x0100
   gb::ROM rom;
   rom.load(std::move(bytes));
   return rom;
@@ -35,5 +40,5 @@ TEST(CPU, EndlessNopLoop)
   }
 
   // After any multiple of 3 instructions (NOP, NOP, JP) PC is back at 0x0100
-  EXPECT_EQ(cpu.pc(), 0x0100);
+  EXPECT_EQ(cpu.pc(), 0x0101);
 }
