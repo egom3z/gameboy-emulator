@@ -37,6 +37,7 @@ namespace gb {
       u16 sp_{0xFFFE}; // Stack Pointer
 
       bool halted_{false};
+      bool stopped_{false};
 
       Memory& mem_;
       std::array<int (CPU::*)(), 256> instruction_table_{};
@@ -143,6 +144,24 @@ namespace gb {
 
       auto LDH_nn_SP() -> int;
 
+      auto LD_nn_SP() -> int;
+
+      auto RLCA() -> int;
+
+      auto RRCA() -> int;
+
+      auto RLA() -> int;
+
+      auto RRA() -> int;
+
+      auto DAA() -> int;
+
+      auto SCF() -> int;
+
+      auto CPL() -> int;
+
+      auto CCF() -> int;
+
       auto OR_A_n() -> int;
 
       auto OR_A_r(int src) -> int;
@@ -168,6 +187,8 @@ namespace gb {
       auto XOR_A_n() -> int;
 
       auto XOR_A_r(int src) -> int;
+
+      auto STOP() -> int;
 
   };
 
