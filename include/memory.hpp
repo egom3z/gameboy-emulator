@@ -27,9 +27,12 @@ namespace gb {
 
       // 8 KiB VRAM, 8 KiB WRAM, etc.
       u8 vram_[0x2000]{};
+      u8 eram_[0x2000]{};
       u8 wram_[0x2000]{};
       u8 oam_ [0x00A0]{};
+      u8 io_  [0x0080]{};
       u8 hram_[0x007F]{};
+      u8 ie_{0};
 
       // helpers
       auto isIO(u16 addr) -> const bool;
