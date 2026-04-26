@@ -1,13 +1,20 @@
 /**
  * @file cpu.hpp
  * @brief Declares the CPU class, registers, flags, and the step() function.
+ *
+ * Naming follows Pan Docs conventions:
+ *   r8     – 8-bit register operand (B,C,D,E,H,L,[HL],A; index 0-7)
+ *   r16    – 16-bit register operand, SP variant (BC,DE,HL,SP; index 0-3)
+ *   r16stk – 16-bit register operand, AF variant (BC,DE,HL,AF; index 0-3)
+ *   n8     – unsigned 8-bit immediate
+ *   n16    – unsigned 16-bit immediate
+ *   e8     – signed 8-bit offset (JR, ADD SP,e8, LD HL,SP+e8)
+ *   cc     – condition code (NZ=0, Z=1, NC=2, C=3)
  */
 
 #pragma once
 #include "memory.hpp"
 #include "types.hpp"
-
-#include <array>
 
 namespace gb {
 
@@ -18,178 +25,153 @@ namespace gb {
       explicit CPU(Memory& mem);
 
       void reset();
-      auto step() -> int; // execute one instruction, return cycles used
-      void initInstructionTable();
+      auto step() -> int; // execute one instruction, return T-cycles used
 
-      // expose key registers for debugging
+      // Expose key registers for debugging / testing
       [[nodiscard]] auto pc() -> const u16;
       [[nodiscard]] auto sp() -> const u16;
-      [[nodiscard]] auto ra() -> const u8;
+      [[nodiscard]] auto a()  -> const u8;
 
     private:
-      // 8-bit registers
-      union { struct {u8 f_, a_; }; u16 af_; }; // AF = Accumulator + Flags (ZNHC)
-      union { struct {u8 c_, b_; }; u16 bc_; }; // BC = General-purpose
-      union { struct {u8 e_, d_; }; u16 de_; }; // DE = General-purpose
-      union { struct {u8 l_, h_; }; u16 hl_; }; // HL = Pointer to memory (address reg)
+      // Register pairs as unions so r8 and r16 accesses share storage.
+      // Struct member order is low-byte first (little-endian layout):
+      //   af_: f_ is bits 0-7, a_ is bits 8-15 -> af_ = 0x01B0 -> A=0x01, F=0xB0
+      union { struct { u8 f_, a_; }; u16 af_; };
+      union { struct { u8 c_, b_; }; u16 bc_; };
+      union { struct { u8 e_, d_; }; u16 de_; };
+      union { struct { u8 l_, h_; }; u16 hl_; };
 
-      u16 pc_{0x0100}; // Program Counter
-      u16 sp_{0xFFFE}; // Stack Pointer
+      u16 pc_{0x0100};
+      u16 sp_{0xFFFE};
 
       bool halted_{false};
       bool stopped_{false};
 
       Memory& mem_;
-      std::array<int (CPU::*)(), 256> instruction_table_{};
 
-      // internal helpers (only declarations)
+      // ── Fetch helpers ────────────────────────────────────────────────────────
       auto fetch8()  -> u8;
       auto fetch16() -> u16;
-      void executeOpcode(u8 opcode);
-      void handleInterrupts();
 
-      // Flag constants
-      static constexpr u8 FLAG_Z = 0x80;
-      static constexpr u8 FLAG_N = 0x40;
-      static constexpr u8 FLAG_H = 0x20;
-      static constexpr u8 FLAG_C = 0x10;
+      // ── Flag constants (bits of F register) ─────────────────────────────────
+      static constexpr u8 FLAG_Z = 0x80; // Zero
+      static constexpr u8 FLAG_N = 0x40; // Subtract
+      static constexpr u8 FLAG_H = 0x20; // Half-carry
+      static constexpr u8 FLAG_C = 0x10; // Carry
 
-      // Register indexing: 0=B, 1=C, 2=D, 3=E, 4=H, 5=L, 6=(HL), 7=A
-      auto getRegister8(int index) -> u8&;
-      auto getRegisterValue(int index) -> u8;
-      void setRegister8(int index, u8 value);
+      // ── Register access helpers ──────────────────────────────────────────────
+      // r8 index: 0=B 1=C 2=D 3=E 4=H 5=L 6=[HL] 7=A
+      auto getR8Ref(int idx) -> u8&; // reference to actual register variable
+      auto getR8(int idx) -> u8;     // value; idx==6 reads mem[HL]
+      void setR8(int idx, u8 val);   // value; idx==6 writes mem[HL]
 
-      // 16-bit register access: 0=BC, 1=DE, 2=HL, 3=SP
-      auto getRegister16_v1(int index) -> u16&;
+      // r16 index: 0=BC 1=DE 2=HL 3=SP
+      auto getR16(int idx) -> u16&;
 
-      // Alternative 16-bit mapping for PUSH/POP: 0=BC, 1=DE, 2=HL, 3=AF
-      auto getRegister16_v2(int index) -> u16&;
+      // r16stk index: 0=BC 1=DE 2=HL 3=AF  (used by PUSH / POP)
+      auto getR16stk(int idx) -> u16&;
 
-      // Condition checking helper
+      // Condition code: 0=NZ 1=Z 2=NC 3=C
       auto getCondition(int cc) -> bool;
 
-      /// Method handlers for SM83 instructions (alphabetically ordered) ///
+      // ── Interrupt handling ───────────────────────────────────────────────────
+      void handleInterrupts();
 
-      auto ADC_A_n() -> int;
+      // ── Instruction handlers (Pan Docs mnemonic + operand-type suffix) ───────
 
-      auto ADC_A_r(int src) -> int;
+      auto ADC_A_n8() -> int;
+      auto ADC_A_r8(int src) -> int;
 
-      auto ADD_A_n() -> int;
+      auto ADD_A_n8() -> int;
+      auto ADD_A_r8(int src) -> int;
+      auto ADD_HL_r16(int reg) -> int;
 
-      auto ADD_A_r(int src) -> int;
-
-      auto ADD_HL_rr(int reg) -> int;
-
-      auto AND_A_n() -> int;
-
-      auto AND_A_r(int src) -> int;
+      auto AND_A_n8() -> int;
+      auto AND_A_r8(int src) -> int;
 
       auto CALL() -> int;
+      auto CALL_cc(bool cond) -> int;
 
-      auto CALL_cc(bool condition) -> int;
+      auto CCF() -> int;
+      auto CPL() -> int;
 
-      auto CP_A_n() -> int;
-
-      auto CP_A_r(int src) -> int;
-
-      auto DEC_r(int reg) -> int;
-
-      auto DEC_rr(int reg) -> int;
-
-      auto INC_r(int reg) -> int;
-
-      auto INC_rr(int reg) -> int;
-
-      auto JP() -> int;
-
-      auto JP_cc(bool condition) -> int;
-
-      auto JR() -> int;
-      
-      auto JR_cc(bool condition) -> int;
-
-      auto LD_A_n() -> int;
-
-      auto LD_A_BC() -> int;
-
-      auto LD_A_DE() -> int;
-
-      auto LD_A_HLD() -> int;
-
-      auto LD_A_HLI() -> int;
-
-      auto LD_BC_A() -> int;
-
-      auto LD_DE_A() -> int;
-
-      auto LD_HLD_A() -> int;
-
-      auto LD_HLI_A() -> int;
-      
-      auto LD_r_n(int dst) -> int;
-
-      auto LD_r_r(int dst, int src) -> int;
-
-      auto LD_rr_nn(int dst) -> int;
-
-      auto LDH_A_nn() -> int;
-
-      auto LDH_A_C() -> int;
-
-      auto LDH_C_A() -> int;
-
-      auto LDH_n_A() -> int;
-
-      auto LDH_nn_A() -> int;
-
-      auto LDH_nn_SP() -> int;
-
-      auto LD_nn_SP() -> int;
-
-      auto RLCA() -> int;
-
-      auto RRCA() -> int;
-
-      auto RLA() -> int;
-
-      auto RRA() -> int;
+      auto CP_A_n8() -> int;
+      auto CP_A_r8(int src) -> int;
 
       auto DAA() -> int;
 
-      auto SCF() -> int;
+      auto DEC_r8(int reg) -> int;
+      auto DEC_r16(int reg) -> int;
 
-      auto CPL() -> int;
+      auto HALT() -> int;
 
-      auto CCF() -> int;
+      auto INC_r8(int reg) -> int;
+      auto INC_r16(int reg) -> int;
 
-      auto OR_A_n() -> int;
+      auto JP() -> int;             // JP n16
+      auto JP_cc(bool cond) -> int; // JP cc, n16
+      auto JP_HL() -> int;          // JP HL
 
-      auto OR_A_r(int src) -> int;
+      auto JR() -> int;             // JR e8
+      auto JR_cc(bool cond) -> int; // JR cc, e8
 
-      auto POP_rr(int idx) -> int;
+      // LD r8/r16 – register <-> immediate / memory
+      auto LD_r8_n8(int dst) -> int;
+      auto LD_r8_r8(int dst, int src) -> int;
+      auto LD_r16_n16(int dst) -> int;
 
-      auto PUSH_rr(u16 value) -> int;
+      // LD A <- [r16mem]
+      auto LD_A_IndBC() -> int;
+      auto LD_A_IndDE() -> int;
+      auto LD_A_HLI() -> int; // LD A, [HL+]
+      auto LD_A_HLD() -> int; // LD A, [HL-]
+
+      // LD [r16mem] <- A
+      auto LD_IndBC_A() -> int;
+      auto LD_IndDE_A() -> int;
+      auto LD_HLI_A() -> int; // LD [HL+], A
+      auto LD_HLD_A() -> int; // LD [HL-], A
+
+      // LD [n16] <- SP  (opcode 0x08)
+      auto LD_n16_SP() -> int;
+
+      // High-memory loads (LDH = 0xFF00 + offset)
+      auto LDH_n8_A() -> int;  // LDH [n8], A  (0xE0)
+      auto LD_IndC_A() -> int; // LD  [C],  A  (0xE2)
+      auto LD_n16_A() -> int;  // LD  [n16],A  (0xEA)
+      auto LDH_A_n8() -> int;  // LDH A, [n8]  (0xF0)
+      auto LD_A_IndC() -> int; // LD  A, [C]   (0xF2)
+      auto LD_A_n16() -> int;  // LD  A, [n16] (0xFA)
+
+      auto OR_A_n8() -> int;
+      auto OR_A_r8(int src) -> int;
+
+      auto POP_r16stk(int idx) -> int;
+      auto PUSH_r16stk(u16 value) -> int;
 
       auto RET() -> int;
+      auto RET_cc(bool cond) -> int;
+      auto RETI() -> int;
 
-      auto RET_cc(bool condition) -> int;
+      auto RLA()  -> int;
+      auto RLCA() -> int;
+      auto RRA()  -> int;
+      auto RRCA() -> int;
 
-      auto RST(u8 vector) -> int;
+      auto RST(u8 vec) -> int;
 
-      auto SBC_A_n() -> int;
+      auto SBC_A_n8() -> int;
+      auto SBC_A_r8(int src) -> int;
 
-      auto SBC_A_r(int src) -> int;
-
-      auto SUB_A_n() -> int;
-
-      auto SUB_A_r(int src) -> int;
-
-      auto XOR_A_n() -> int;
-
-      auto XOR_A_r(int src) -> int;
+      auto SCF() -> int;
 
       auto STOP() -> int;
 
+      auto SUB_A_n8() -> int;
+      auto SUB_A_r8(int src) -> int;
+
+      auto XOR_A_n8() -> int;
+      auto XOR_A_r8(int src) -> int;
   };
 
 } // namespace gb
