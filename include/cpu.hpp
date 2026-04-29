@@ -172,6 +172,20 @@ namespace gb {
 
       auto XOR_A_n8() -> int;
       auto XOR_A_r8(int src) -> int;
+
+      // CB prefix dispatcher
+      auto execute_CB(u8 op) -> int;
+
+      // CB rotate / shift helpers (operate on any r8; set Z unlike accumulator versions)
+      auto CB_RLC(int reg) -> int;  // rotate left, bit 7 -> carry and -> bit 0
+      auto CB_RRC(int reg) -> int;  // rotate right, bit 0 -> carry and -> bit 7
+      auto CB_RL(int reg)  -> int;  // rotate left through carry
+      auto CB_RR(int reg)  -> int;  // rotate right through carry
+      auto CB_SLA(int reg) -> int;  // shift left arithmetic (bit 0 = 0)
+      auto CB_SRA(int reg) -> int;  // shift right arithmetic (bit 7 preserved)
+      auto CB_SWAP(int reg) -> int; // swap high and low nibbles
+      auto CB_SRL(int reg) -> int;  // shift right logical (bit 7 = 0)
+      // BIT / RES / SET are handled inline in execute_CB
   };
 
 } // namespace gb

@@ -595,6 +595,114 @@ namespace gb {
     return (src == kR8_IndHL) ? 8 : 4;
   }
 
+  auto CPU::CB_RLC(int reg) -> int {
+    const u8 val = getR8(reg);
+    const bool bit7 = (val & 0x80) != 0;
+    const u8 result = (val << 1) | (bit7 ? 1 : 0);
+    setR8(reg, result);
+    f_ = (result == 0 ? FLAG_Z : 0) | (bit7 ? FLAG_C : 0);
+    return (reg == kR8_IndHL) ? 16 : 8;
+  }
+
+  auto CPU::CB_RRC(int reg) -> int {
+    const u8 val = getR8(reg);
+    const bool bit0 = (val & 0x01) != 0;
+    const u8 result = (val >> 1) | (bit0 ? 0x80 : 0);
+    setR8(reg, result);
+    f_ = (result == 0 ? FLAG_Z : 0) | (bit0 ? FLAG_C : 0);
+    return (reg == kR8_IndHL) ? 16 : 8;
+  }
+
+  auto CPU::CB_RL(int reg) -> int {
+    const u8 val = getR8(reg);
+    const bool old_C = (f_ & FLAG_C) != 0;
+    const bool bit7 = (val & 0x80) != 0;
+    const u8 result = (val << 1) | (old_C ? 1 : 0);
+    setR8(reg, result);
+    f_ = (result == 0 ? FLAG_Z : 0) | (bit7 ? FLAG_C : 0);
+    return (reg == kR8_IndHL) ? 16 : 8;
+  }
+
+  auto CPU::CB_RR(int reg) -> int {
+    const u8 val = getR8(reg);
+    const bool old_C = (f_ & FLAG_C) != 0;
+    const bool bit0 = (val & 0x01) != 0;
+    const u8 result = (val >> 1) | (old_C ? 0x80 : 0);
+    setR8(reg, result);
+    f_ = (result == 0 ? FLAG_Z : 0) | (bit0 ? FLAG_C : 0);
+    return (reg == kR8_IndHL) ? 16 : 8;
+  }
+
+  auto CPU::CB_SLA(int reg) -> int {
+    const u8 val = getR8(reg);
+    const bool bit7 = (val & 0x80) != 0;
+    const u8 result = val << 1;
+    setR8(reg, result);
+    f_ = (result == 0 ? FLAG_Z : 0) | (bit7 ? FLAG_C : 0);
+    return (reg == kR8_IndHL) ? 16 : 8;
+  }
+
+  auto CPU::CB_SRA(int reg) -> int {
+    const u8 val = getR8(reg);
+    const bool bit0 = (val & 0x01) != 0;
+    const u8 result = (val >> 1) | (val & 0x80);
+    setR8(reg, result);
+    f_ = (result == 0 ? FLAG_Z : 0) | (bit0 ? FLAG_C : 0);
+    return (reg == kR8_IndHL) ? 16 : 8;
+  }
+
+  auto CPU::CB_SWAP(int reg) -> int {
+    const u8 val = getR8(reg);
+    const u8 result = ((val & 0x0F) << 4) | (val >> 4);
+    setR8(reg, result);
+    f_ = (result == 0 ? FLAG_Z : 0);
+    return (reg == kR8_IndHL) ? 16 : 8;
+  }
+
+  auto CPU::CB_SRL(int reg) -> int {
+    const u8 val = getR8(reg);
+    const bool bit0 = (val & 0x01) != 0;
+    const u8 result = val >> 1;
+    setR8(reg, result);
+    f_ = (result == 0 ? FLAG_Z : 0) | (bit0 ? FLAG_C : 0);
+    return (reg == kR8_IndHL) ? 16 : 8;
+  }
+
+  auto CPU::execute_CB(u8 op) -> int {
+    const int reg = op & 0x07;
+    const int operand = (op >> 3) & 0x07;
+    const int group = op >> 6;
+
+    if (group == 1) { // BIT b, r8
+      const u8 val = getR8(reg);
+      f_ &= FLAG_C;
+      f_ |= FLAG_H;
+      if (((val >> operand) & 1) == 0) { f_ |= FLAG_Z; }
+      return (reg == kR8_IndHL) ? 12 : 8;
+    }
+
+    if (group == 2) { // RES b, r8
+      setR8(reg, getR8(reg) & ~(1 << operand));
+      return (reg == kR8_IndHL) ? 16 : 8;
+    }
+
+    if (group == 3) { // SET b, r8
+      setR8(reg, getR8(reg) | (1 << operand));
+      return (reg == kR8_IndHL) ? 16 : 8;
+    }
+
+    switch (operand) {
+      case 0: return CB_RLC(reg);
+      case 1: return CB_RRC(reg);
+      case 2: return CB_RL(reg);
+      case 3: return CB_RR(reg);
+      case 4: return CB_SLA(reg);
+      case 5: return CB_SRA(reg);
+      case 6: return CB_SWAP(reg);
+      case 7: return CB_SRL(reg);
+      default: UNIMPLEMENTED();
+    }
+  }
 
   void CPU::reset() {
     af_ = 0x01B0;
@@ -828,7 +936,7 @@ namespace gb {
       case 0xC8: return RET_cc((f_ & FLAG_Z) != 0); // RET Z
       case 0xC9: return RET(); // RET
       case 0xCA: return JP_cc((f_ & FLAG_Z) != 0); // JP Z, n16
-      case 0xCB: UNIMPLEMENTED(); // CB prefix (bit ops) - TODO
+      case 0xCB: execute_CB(fetch8()); // CB prefix (bit ops)
       case 0xCC: return CALL_cc((f_ & FLAG_Z) != 0); // CALL Z, n16
       case 0xCD: return CALL(); // CALL n16
       case 0xCE: return ADC_A_n8(); // ADC A, n8
